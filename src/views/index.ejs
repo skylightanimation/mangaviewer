@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<%- include('components/head') %>
+	</head>
+
+	<body>
+		<div class="wrapper">
+			<!--sodebar-->
+			<%- include('components/sidebar') %>
+
+			<div class="main">
+				<%- include('components/navbar') %>
+
+				<main class="content">
+					<div id="page-content-wrapper">
+						
+					<div id="imageView" class="carousel slide" data-ride="carousel">
+
+						  <!-- Indicators -->
+						  <!-- The slideshow -->
+						  <center>
+					 		  <div id="img-content" class="carousel-inner">
+							  </div> 
+						  </center>
+
+						  <!-- Left and right controls -->
+						  <a class="carousel-control-prev" href="#imageView" data-slide="prev">
+						    <span class="carousel-control-prev-icon"></span>
+						  </a>
+						  <a class="carousel-control-next" href="#imageView" data-slide="next">
+						    <span class="carousel-control-next-icon"></span>
+						  </a>
+
+					</div>
+
+	            </div>
+				</main>
+
+				<%- include('components/footer') %>
+			</div>
+		</div>
+
+		<script src="/assets/js/app.js"></script>
+
+
+		<script type="text/javascript">
+			let height = screen.height;
+			
+			//cnfg
+			let base_url = "http://localhost:3000/";
+			let api_folder = 'fetch_folder';
+			let api_file = 'fetch_file/';
+
+			$.ajax({ 
+					type: 'GET', 
+					url: base_url+api_folder,
+					dataType: 'json',
+					success: function (data) {
+						let html = '';
+						for (var i = data.length - 1; i >= 0; i--) {
+							html = html+`
+								<li class="sidebar-item active">
+									<a class="sidebar-link"  href="javascript:void(0)" data-title="`+data[i]['name']+`">
+						              `+data[i]['name']+`
+						            </a>
+								</li>
+							`;
+						}
+						$( "#sidebar ul" ).empty();
+						$( "#sidebar ul" ).append('<li class="sidebar-header">Lists</li>'+html);
+						
+					}
+			});
+
+
+
+
+
+			$(document).ready(function (e) {
+
+				let html = '';
+				function cleanViewer(){
+					publishTemp = 0;
+					viewTemp = 0;
+					html = '';
+					$( "#img-content" ).empty();
+				}
+
+
+				function fetchImageByTitle(title, type){
+					$.ajax({ 
+						type: 'GET', 
+						url: base_url+api_file+title, 
+						dataType: 'json',
+						success: function (data) {
+							viewImage(data, type);
+						}
+					});
+				}
+
+				function viewImage(data, type){
+
+					viewTemp=viewTemp+1;
+					if (type == 'single') {
+						for (var i = 0; i < data[0]['data'].length; i++) {
+							if (i == 0) {
+								html = html+`
+								<div class="carousel-item active">
+										<img src="`+data[0]['data'][i]+`" alt="`+data[0]['title']+`" style="height:`+height+`px">
+									</div>
+								`;
+							}else{
+								html = html+`
+								<div class="carousel-item">
+										<img src="`+data[0]['data'][i]+`" alt="`+data[0]['title']+`" style="height:`+height+`px">
+									</div>
+								`;
+							}	
+						}
+
+						$( "#img-content" ).append(html);
+					}else if(type == 'all'){
+
+						for (var i = 0; i < data[0]['data'].length; i++) {
+							if (i == 0 && viewTemp == 1) {
+								html = html+`
+								<div class="carousel-item active">
+										<img src="`+data[0]['data'][i]+`" alt="`+data[0]['title']+`" style="height:`+height+`px">
+									</div>
+								`;
+							}else{
+								html = html+`
+								<div class="carousel-item">
+										<img src="`+data[0]['data'][i]+`" alt="`+data[0]['title']+`" style="height:`+height+`px">
+									</div>
+								`;
+							}
+							
+						}
+
+						if (publishTemp == viewTemp) {
+							$( "#img-content" ).append(html);
+						}
+					}
+				}
+
+
+				$(document).on('keypress',function(e) {
+				    if(e.which == 13) {
+						let checkCollapsed = $( "#sidebar" ).hasClass( "collapsed" );
+						if (checkCollapsed == true) {
+							$('#sidebar').removeClass('collapsed');
+						}else{
+							$('#sidebar').addClass('collapsed');
+						}
+				        	
+				    }
+				    if(e.key == "a"){
+				    	console.log(8);
+				    	runAll();
+				    }
+
+					if (e.key == "1") {
+						console.log("speed change :  500");
+						$('#imageView').carousel({interval:500});
+					}
+					if (e.key == "2") {
+						console.log("speed change :  5000");
+						$('#imageView').carousel({interval: 5000});
+					}
+					if (e.key == "3") {
+						console.log("speed change :  10000");
+						$('#imageView').carousel({interval: 10000});
+					}
+					if (e.key == "4") {
+						console.log("slider : stopped");
+						$('#imageView').carousel({pause: true});
+					}
+				});
+
+				function runAll(){
+
+					cleanViewer();
+					$.ajax({ 
+							type: 'GET', 
+							url: base_url+api_folder,
+							dataType: 'json',
+							success: function (dataResult) {
+								let html = '';
+								publishTemp = dataResult.length;
+								for (var j = dataResult.length - 1; j >= 0; j--) {
+
+									let data = fetchImageByTitle(dataResult[j]['name'], 'all');
+
+								}
+								
+							}
+					});
+				}
+
+
+				$( '#sidebar' ).on( 'click', 'a', function () {
+					cleanViewer();
+					let title = $(this).data('title');
+					let data = fetchImageByTitle(title,'single');
+				});
+				
+
+				let publishTemp = 0;
+				let viewTemp = 0;
+				$( '#fetchAll' ).on( 'click', 'a', function () {
+					runAll();
+				});
+
+			});
+
+
+		</script>
+
+	</body>
+
+</html>
